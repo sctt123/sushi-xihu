@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西湖工程・苏轼治湖模拟器</title>
+<style>
+:root{
+  --ink:#26352f; --muted:#65736b; --paper:#f4f0e5; --paper2:#fbfaf5;
+  --green:#4f6f5c; --green2:#78957d; --gold:#b58a45; --red:#9b554c;
+  --shadow:0 18px 45px rgba(43,54,47,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;color:var(--ink);background:
+  radial-gradient(circle at 20% 10%,rgba(181,138,69,.09),transparent 28%),
+  linear-gradient(180deg,#e9e5d8 0%,#f5f1e6 35%,#e8eee7 100%);
+  font-family:"Noto Sans SC","Microsoft YaHei",sans-serif;
+}
+button,input{font:inherit}
+button{cursor:pointer}
+.hero{
+  min-height:88vh;display:grid;place-items:center;position:relative;overflow:hidden;
+  padding:70px 22px;background:
+  linear-gradient(180deg,rgba(245,241,230,.25),rgba(245,241,230,.85)),
+  radial-gradient(ellipse at 72% 65%,#aab99e 0 8%,transparent 9%),
+  linear-gradient(165deg,#d9d7c8,#e9e5d8 55%,#c7d0c5);
+}
+.hero:before,.hero:after{
+  content:"";position:absolute;border-radius:50%;filter:blur(1px);opacity:.35;
+  border:1px solid rgba(55,74,63,.35)
+}
+.hero:before{width:580px;height:580px;right:-190px;top:-190px}
+.hero:after{width:760px;height:760px;left:-360px;bottom:-450px}
+.hero-inner{max-width:1100px;width:100%;position:relative;z-index:2}
+.kicker{letter-spacing:.3em;font-size:13px;color:var(--green);font-weight:700}
+h1{
+  font-family:"STKaiti","KaiTi","Noto Serif SC",serif;
+  font-size:clamp(52px,9vw,105px);line-height:1;margin:20px 0 12px;
+  font-weight:700;letter-spacing:.02em
+}
+.subtitle{font-family:serif;font-size:clamp(18px,2.3vw,27px);color:#4b5c52}
+.hero-copy{max-width:680px;line-height:1.9;color:#59665f}
+.seal{
+  position:absolute;right:7%;top:18%;width:100px;height:100px;border:3px solid #a55046;
+  color:#a55046;display:grid;place-items:center;font-family:serif;font-size:25px;
+  transform:rotate(8deg);opacity:.9
+}
+.scroll{margin-top:38px;color:var(--green);font-size:14px;letter-spacing:.12em}
+main{max-width:1180px;margin:auto;padding:30px 20px 100px}
+.section{margin:70px 0}
+.section-title{display:flex;gap:18px;align-items:flex-end;margin-bottom:24px}
+.num{font-family:serif;font-size:52px;color:var(--gold);line-height:.8}
+h2{font-family:serif;font-size:36px;margin:0}
+.lead{color:var(--muted);line-height:1.8;max-width:760px}
+.panel{
+  background:rgba(251,250,245,.86);border:1px solid rgba(78,96,84,.15);
+  border-radius:24px;box-shadow:var(--shadow);overflow:hidden
+}
+.disaster-grid{display:grid;grid-template-columns:1.15fr .85fr}
+@media(max-width:800px){.disaster-grid{grid-template-columns:1fr}.seal{display:none}}
+.scene{min-height:390px;position:relative;overflow:hidden;background:#c8d0c7}
+.scene.old{background:linear-gradient(#b7c3ba 0 38%,#7e927f 39% 100%)}
+.scene .mountain{position:absolute;bottom:44%;width:0;height:0;border-left:190px solid transparent;border-right:190px solid transparent;border-bottom:145px solid #6f8174;opacity:.75}
+.m1{left:-100px}.m2{left:250px;transform:scale(.8)}.m3{right:-100px;transform:scale(1.15)}
+.lake{position:absolute;left:9%;right:9%;bottom:7%;height:50%;border-radius:48% 52% 42% 58%;
+  background:linear-gradient(160deg,#788e80,#657b70);border:8px solid rgba(48,67,57,.22)}
+.mud{position:absolute;background:#645c4e;border-radius:50%;opacity:.7}
+.mud:nth-child(1){width:170px;height:55px;left:14%;bottom:25%;transform:rotate(-9deg)}
+.mud:nth-child(2){width:130px;height:42px;left:42%;bottom:18%;transform:rotate(12deg)}
+.mud:nth-child(3){width:190px;height:65px;right:10%;bottom:28%;transform:rotate(-15deg)}
+.weed{position:absolute;width:3px;background:#4e634d;bottom:25%;height:80px;transform-origin:bottom}
+.weed:after{content:"";position:absolute;top:20px;left:-18px;width:36px;height:35px;border-top:3px solid #536b4f;border-radius:50%}
+.w1{left:23%;transform:rotate(-12deg)}.w2{left:32%;height:105px;transform:rotate(14deg)}.w3{right:25%;height:90px;transform:rotate(-20deg)}
+.scene-label{position:absolute;left:22px;top:20px;background:rgba(250,247,235,.82);padding:8px 13px;border-radius:999px;font-size:13px}
+.disaster-copy{padding:38px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:26px 0}
+.stat{padding:17px;border-radius:16px;background:#ece9dd}
+.stat b{display:block;font-size:24px;color:var(--red)}
+.note{font-size:14px;line-height:1.8;color:#66736c}
+.quote{font-family:serif;font-size:22px;line-height:1.8;border-left:3px solid var(--gold);padding-left:18px;margin:28px 0}
+
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:850px){.choices{grid-template-columns:1fr}}
+.choice{
+  padding:25px;background:var(--paper2);border:1px solid #d9d9cd;border-radius:20px;
+  text-align:left;transition:.2s;position:relative
+}
+.choice:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(43,54,47,.1)}
+.choice .tag{font-size:12px;color:#7a857e;letter-spacing:.1em}
+.choice h3{font-family:serif;font-size:25px;margin:12px 0}
+.choice p{line-height:1.75;color:#65716a}
+.choice.correct{border-color:#75947d;background:#edf3eb}
+.choice.wrong{border-color:#bd8078;background:#f7ece9}
+.feedback{margin-top:20px;padding:22px 25px;border-radius:18px;display:none;line-height:1.8}
+.feedback.show{display:block}
+.feedback.good{background:#e4eee5;border:1px solid #9bb19e}
+.feedback.bad{background:#f5e5e2;border:1px solid #d39b92}
+.continue{display:none;margin-top:18px}
+.continue.show{display:inline-block}
+.primary{
+  border:0;border-radius:999px;background:var(--green);color:white;padding:13px 22px;
+  box-shadow:0 8px 18px rgba(79,111,92,.2)
+}
+.secondary{
+  border:1px solid #aebbb1;background:transparent;color:var(--green);border-radius:999px;padding:12px 19px
+}
+
+.build{display:none}.build.unlocked{display:block}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+@media(max-width:800px){.steps{grid-template-columns:2fr 2fr}}
+.step{padding:14px;border-radius:14px;background:#e7e6db;color:#778079;text-align:center;font-size:14px}
+.step.active{background:#dce8dc;color:#3f5e48;font-weight:700}
+.build-stage{min-height:330px;background:linear-gradient(180deg,#dce4da,#b5c8b6 47%,#769785 48%,#678a78);position:relative;overflow:hidden}
+.build-stage .water{position:absolute;bottom:0;left:0;right:0;height:52%;background:linear-gradient(180deg,#86a99b,#5e877b)}
+.build-stage .bank{position:absolute;bottom:52%;left:0;right:0;height:25px;background:#9b8d6c}
+.dike{position:absolute;bottom:48%;left:11%;width:78%;height:54px;background:#9a8b69;transform:rotate(-1deg);box-shadow:0 9px 0 rgba(74,74,58,.12)}
+.bridge{position:absolute;bottom:48%;width:72px;height:65px;border:11px solid #786e59;border-bottom:0;border-radius:50px 50px 0 0}
+.b1{left:19%}.b2{left:36%}.b3{left:53%}.b4{left:70%}
+.tree{position:absolute;bottom:48%;width:8px;height:80px;background:#5e5948}
+.tree:before{content:"";position:absolute;width:62px;height:42px;border-radius:50%;background:#65836b;left:-27px;top:-25px}
+.t1{left:15%}.t2{left:29%}.t3{right:22%}.t4{right:11%}
+.stage-text{position:absolute;top:22px;left:25px;background:rgba(250,248,237,.86);padding:15px 18px;border-radius:14px;max-width:420px;line-height:1.7}
+.build-controls{padding:22px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+
+.compare{padding:0}
+.compare-wrap{position:relative;height:460px;overflow:hidden;background:#91a996}
+@media(max-width:700px){.compare-wrap{height:380px}}
+.compare-side{position:absolute;inset:0}
+.compare-side.new{background:linear-gradient(#b9d0c3 0 36%,#82a892 37% 100%)}
+.compare-side.old{background:linear-gradient(#b7c3ba 0 36%,#7d8f7d 37% 100%);clip-path:inset(0 50% 0 0)}
+.compare-side:before{
+  content:"";position:absolute;left:8%;right:8%;bottom:9%;height:53%;border-radius:48%;
+  background:#678e86;border:7px solid rgba(51,73,62,.2)
+}
+.old:before{background:#6b7c6e}
+.compare-side .comp-mountain{position:absolute;bottom:51%;left:15%;width:0;height:0;border-left:180px solid transparent;border-right:180px solid transparent;border-bottom:140px solid #718779;opacity:.75}
+.new .comp-mountain{border-bottom-color:#789786}
+.new .dike{bottom:49%;height:44px}
+.compare-side .flowers{position:absolute;bottom:51%;left:10%;right:10%;height:70px;background:
+  radial-gradient(circle at 10% 40%,#d5c3a2 0 5px,transparent 6px),
+  radial-gradient(circle at 25% 25%,#d5c3a2 0 4px,transparent 5px),
+  radial-gradient(circle at 48% 45%,#d5c3a2 0 5px,transparent 6px),
+  radial-gradient(circle at 72% 25%,#d5c3a2 0 4px,transparent 5px),
+  radial-gradient(circle at 91% 42%,#d5c3a2 0 5px,transparent 6px)
+}
+.compare-label{position:absolute;top:18px;padding:9px 13px;background:rgba(250,248,237,.86);border-radius:999px;font-size:13px;z-index:3}
+.label-old{left:18px}.label-new{right:18px}
+.slider{
+  position:absolute;z-index:5;top:0;bottom:0;width:4px;background:#fff;left:50%;
+  box-shadow:0 0 0 1px rgba(0,0,0,.1)
+}
+.slider:after{
+  content:"↔";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:48px;height:48px;border-radius:50%;background:#fff;color:var(--green);
+  display:grid;place-items:center;font-weight:bold;box-shadow:0 5px 20px rgba(0,0,0,.18)
+}
+#range{position:absolute;inset:0;width:100%;height:100%;opacity:0;z-index:10;cursor:ew-resize}
+.compare-info{padding:20px 24px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:#637068;line-height:1.7}
+
+.knowledge{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:850px){.knowledge{grid-template-columns:1fr}}
+.card{
+  padding:26px;border-radius:20px;background:var(--paper2);border:1px solid #d8d8cc;
+  transition:.2s
+}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(43,54,47,.09)}
+.icon{font-family:serif;font-size:34px;color:var(--gold)}
+.card h3{font-family:serif;font-size:23px;margin:10px 0}
+.card p{line-height:1.8;color:#647069}
+.learn{margin-top:12px}
+
+.ending{
+  padding:60px 25px;text-align:center;background:
+  linear-gradient(rgba(251,250,245,.92),rgba(251,250,245,.92)),
+  radial-gradient(circle,#8da98e,transparent 55%);
+  border-radius:25px;box-shadow:var(--shadow)
+}
+.ending h2{font-size:42px}
+.ending p{max-width:700px;margin:18px auto;line-height:2;color:#5e6b64}
+.sources{font-size:12px;color:#7a817d;line-height:1.8;margin-top:25px}
+.sources a{color:#58735f}
+
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(26,34,29,.48);z-index:100;place-items:center;padding:20px}
+.modal-backdrop.show{display:grid}
+.modal{max-width:650px;width:100%;background:#faf8ef;border-radius:22px;padding:34px;box-shadow:0 25px 70px rgba(0,0,0,.28);position:relative}
+.close{position:absolute;right:18px;top:14px;border:0;background:transparent;font-size:27px;color:#68756d}
+.modal h3{font-family:serif;font-size:31px;margin:5px 0 18px}
+.modal p,.modal li{line-height:1.9;color:#5f6b64}
+.progress{height:5px;background:#dfe2d8;border-radius:5px;overflow:hidden;margin-top:25px}
+.progress i{display:block;height:100%;width:0;background:var(--green);transition:.5s}
+
+/* ===== 古地图·水墨沉浸层 ===== */
+.map-shell.ink-map-shell{grid-template-columns:1.65fr .7fr}
+.ink-map{min-height:700px!important;position:relative;overflow:hidden;background:
+radial-gradient(ellipse at 28% 25%,rgba(91,115,91,.11),transparent 26%),
+radial-gradient(ellipse at 76% 68%,rgba(166,130,74,.10),transparent 28%),#e9e1cd!important;
+box-shadow:inset 0 0 80px rgba(91,72,45,.12)}
+.ink-map:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.34;
+background:repeating-linear-gradient(0deg,transparent 0 4px,rgba(99,82,53,.035) 5px),
+repeating-linear-gradient(90deg,transparent 0 7px,rgba(99,82,53,.025) 8px);mix-blend-mode:multiply}
+.ink-map:after{content:"";position:absolute;inset:12px;border:1px solid rgba(94,74,43,.22);
+pointer-events:none;box-shadow:inset 0 0 28px rgba(74,60,39,.08)}
+.map-title-stamp{position:absolute;right:25px;top:24px;z-index:8;width:72px;height:72px;border:2px solid #a54f45;color:#a54f45;
+display:grid;place-items:center;text-align:center;font-family:serif;font-size:16px;line-height:1.2;transform:rotate(7deg);
+background:rgba(239,226,199,.32);mix-blend-mode:multiply}
+.map-compass{position:absolute;left:25px;bottom:24px;z-index:8;width:70px;height:70px;border:1px solid rgba(75,66,47,.4);
+border-radius:50%;display:grid;place-items:center;font-family:serif;color:#675943;background:rgba(245,237,216,.55)}
+.map-compass:before{content:"南";position:absolute;bottom:-18px;font-size:12px}.map-compass:after{content:"北";position:absolute;top:-18px;font-size:12px}
+.ancient-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2}
+.ancient-svg .mountain{fill:none;stroke:#596b5d;stroke-width:2.2;opacity:.72}
+.ancient-svg .mountain2{fill:none;stroke:#8b927d;stroke-width:1.2;opacity:.6}
+.ancient-svg .waterline{fill:none;stroke:#577f78;stroke-width:1.5;opacity:.45}
+.ancient-svg .shoreline{fill:#76988b;fill-opacity:.48;stroke:#496e68;stroke-width:2.2}
+.ancient-svg .island{fill:#a6a27c;fill-opacity:.5;stroke:#65765e;stroke-width:1.5}
+.ancient-svg .dike{fill:#a58b65;fill-opacity:.82;stroke:#705e45;stroke-width:2.5;cursor:pointer}
+.ancient-svg .road{fill:none;stroke:#806d50;stroke-width:2;stroke-dasharray:5 5;opacity:.8}
+.ancient-svg .label,.ancient-svg .smalllabel{font-family:"STKaiti","KaiTi",serif;fill:#4b574d}
+.ancient-svg .label{font-size:18px}.ancient-svg .smalllabel{font-size:13px}
+.ancient-svg .building{fill:#786653;opacity:.72}.ancient-svg .building-roof{fill:#574c40;opacity:.8}
+.ancient-svg .bridge{fill:none;stroke:#675744;stroke-width:5;opacity:.9}
+.map-water-shimmer{position:absolute;inset:20% 25% 18% 18%;z-index:3;pointer-events:none;opacity:.65}
+.map-water-shimmer i{position:absolute;width:120px;height:2px;background:rgba(231,240,225,.7);filter:blur(.3px);animation:waterDrift 5s ease-in-out infinite}
+.map-water-shimmer i:nth-child(1){left:12%;top:35%;animation-delay:-1s}.map-water-shimmer i:nth-child(2){left:42%;top:51%;width:160px;animation-delay:-3s}
+.map-water-shimmer i:nth-child(3){left:28%;top:68%;width:90px;animation-delay:-4s}.map-water-shimmer i:nth-child(4){left:58%;top:28%;width:100px;animation-delay:-2s}
+@keyframes waterDrift{0%,100%{transform:translateX(-8px);opacity:.2}50%{transform:translateX(20px);opacity:.85}}
+.map-boat{position:absolute;z-index:7;width:46px;height:30px;pointer-events:none;filter:drop-shadow(0 3px 2px rgba(54,50,38,.2))}
+.map-boat .hull{position:absolute;left:4px;bottom:3px;width:38px;height:13px;background:#725b43;border-radius:4px 4px 16px 16px;transform:skew(-12deg)}
+.map-boat .mast{position:absolute;left:22px;bottom:12px;width:2px;height:20px;background:#564a3c}.map-boat .sail{position:absolute;left:24px;bottom:17px;border-right:17px solid transparent;border-bottom:12px solid rgba(231,221,193,.9);transform:rotate(-7deg)}
+.boat1{left:44%;top:42%;animation:boatRoute1 18s linear infinite}.boat2{left:34%;top:58%;animation:boatRoute2 22s linear infinite}
+@keyframes boatRoute1{0%{transform:translate(0,0) rotate(7deg)}25%{transform:translate(90px,20px) rotate(0)}50%{transform:translate(135px,80px) rotate(12deg)}75%{transform:translate(60px,120px) rotate(5deg)}100%{transform:translate(0,0) rotate(7deg)}}
+@keyframes boatRoute2{0%{transform:translate(0,0) rotate(-5deg)}35%{transform:translate(-70px,30px) rotate(-12deg)}70%{transform:translate(-35px,100px) rotate(4deg)}100%{transform:translate(0,0) rotate(-5deg)}}
+.map-person{position:absolute;z-index:7;width:13px;height:22px;pointer-events:none;filter:drop-shadow(0 2px 1px rgba(50,45,35,.22))}
+.map-person:before{content:"";position:absolute;left:4px;top:0;width:7px;height:7px;border-radius:50%;background:#5b5042}
+.map-person:after{content:"";position:absolute;left:2px;top:7px;width:10px;height:13px;background:#75654f;border-radius:5px 5px 2px 2px}
+.person1{left:24%;top:54%;animation:walk1 8s ease-in-out infinite}.person2{left:68%;top:45%;animation:walk2 10s ease-in-out infinite}.person3{left:55%;top:71%;animation:walk3 9s ease-in-out infinite}
+@keyframes walk1{0%,100%{transform:translate(0,0)}50%{transform:translate(24px,-5px)}}@keyframes walk2{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,10px)}}@keyframes walk3{0%,100%{transform:translate(0,0)}50%{transform:translate(18px,-8px)}}
+.map-point-ink{fill:#f8efd8;stroke:#9b5c48;stroke-width:2.5;cursor:pointer;filter:drop-shadow(0 2px 1px rgba(62,54,41,.18));transition:.25s}
+.map-point-ink:hover{r:13;fill:#f3d9a2}.map-point-ink.active{fill:#b88a45;stroke:#fff4d8;stroke-width:4}
+.point-ripple{fill:none;stroke:#b88a45;stroke-width:1.5;opacity:0;animation:ripple 2.4s ease-out infinite}
+@keyframes ripple{0%{r:9;opacity:.8}100%{r:25;opacity:0}}
+.map-side.manuscript{position:relative;background:#f2e7cf;border-left:1px solid rgba(92,72,45,.16)}
+.map-side.manuscript:before{content:"";position:absolute;inset:0;opacity:.28;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 28px,rgba(93,77,52,.12) 29px)}
+.manuscript-inner{position:relative;z-index:2}.manuscript-tag{font-family:serif;color:#8c604a;font-size:12px;letter-spacing:.16em}
+.manuscript h3{font-size:31px;font-weight:700;line-height:1.2;margin:10px 0 15px}.manuscript-copy{font-family:"STKaiti","KaiTi",serif;font-size:17px;line-height:2;color:#4f5147}
+.ink-quote{margin:22px 0;padding:16px 18px;border-left:3px solid #a56f4d;font-family:"STKaiti","KaiTi",serif;font-size:21px;line-height:1.9;color:#534d43;background:rgba(239,224,194,.35)}
+.seal-mini{display:inline-grid;place-items:center;width:48px;height:48px;border:2px solid #a54f45;color:#a54f45;font-family:serif;font-size:12px;line-height:1.1;transform:rotate(-5deg);margin:5px 0 12px}
+.scroll-hint{font-family:serif;color:#766b58;font-size:12px;border-top:1px solid rgba(92,72,45,.18);padding-top:15px;margin-top:18px}
+@media(max-width:900px){.map-shell.ink-map-shell{grid-template-columns:1fr}.ink-map{min-height:620px!important}}
+
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="kicker">NORTHERN SONG · HANGZHOU · 1089</div>
+    <h1>西湖工程</h1>
+    <div class="subtitle">苏轼治湖模拟器</div>
+    <p class="hero-copy">
+      你现在不是游客，而是元祐年间的杭州知州。<br>
+      西湖正在被葑草与淤泥一点点吞没。你的任务不是把它“变漂亮”，
+      而是解决一场真正关系到饮水、灌溉、漕运与百姓生计的城市水利危机。
+    </p>
+    <div class="seal">东坡<br>知杭</div>
+    <div class="scroll">↓ 从灾情开始</div>
+  </div>
+</header>
+
+<main>
+
+<section class="section" id="disaster">
+  <div class="section-title"><span class="num">01</span><h2>展开《西湖图》：先做一名勘湖的知州</h2></div>
+  <p class="lead">地图不再只是背景。沿着水路和堤路观察湖面、城郭、农田与界标，点击地点取得一张<strong>苏轼手稿式证据笺</strong>。只有读懂现场，才有资格做下一步决策。</p>
+  <div class="panel map-shell ink-map-shell">
+    <div class="map ink-map" id="inkMap">
+      <div class="map-note"><b>《元祐杭州西湖水利图》・教学绘本</b><br>山水、城郭、舟人均为互动示意；重点是理解治理关系。</div>
+      <div class="map-title-stamp">西湖<br>工程</div><div class="map-compass">上</div>
+      <svg class="ancient-svg" viewBox="0 0 900 700" aria-label="古地图质感的西湖互动地图">
+        <path class="mountain" d="M25 165 Q85 105 140 160 T255 150 T370 168 T485 125 T610 160 T750 120 T880 170"/>
+        <path class="mountain2" d="M15 195 Q90 142 150 190 T290 182 T420 202 T555 160 T690 195 T820 158 T895 195"/>
+        <path class="mountain" d="M65 245 Q130 188 190 235 T315 225 M650 240 Q725 185 790 230 T890 220"/>
+        <path class="mountain2" d="M90 275 Q150 235 210 260 M685 270 Q755 230 830 262"/>
+        <path d="M48 470 L165 430 L205 472 L150 535 L60 530Z" fill="#d0bd97" fill-opacity=".52" stroke="#76634d" stroke-width="2"/>
+        <path d="M68 482 L142 454 L176 477 L145 515 L76 512Z" fill="none" stroke="#806b50" stroke-width="1.5"/>
+        <g class="building"><path class="building-roof" d="M78 475l22-15 22 15z"/><rect x="84" y="475" width="32" height="22"/><path class="building-roof" d="M126 463l18-12 18 12z"/><rect x="131" y="463" width="26" height="20"/><path class="building-roof" d="M92 507l20-13 20 13z"/><rect x="97" y="507" width="30" height="18"/></g>
+        <text class="label" x="78" y="555">杭州城</text><text class="smalllabel" x="70" y="576">运河・民居・市井</text>
+        <path class="shoreline" d="M300 150 C405 105 600 125 670 210 C725 278 685 395 620 472 C555 548 430 565 335 510 C255 463 220 360 238 270 C248 215 268 178 300 150Z"/>
+        <path class="waterline" d="M275 235 Q410 185 650 245 M255 285 Q430 250 690 300 M250 340 Q430 310 680 360 M270 400 Q440 380 650 425 M315 465 Q470 450 610 475"/>
+        <path class="waterline" d="M335 185 Q420 150 520 170 M355 515 Q460 540 570 500"/>
+        <path class="island" d="M475 355 Q515 325 560 352 Q545 395 500 402 Q475 390 475 355Z"/><path class="island" d="M420 410 Q445 390 468 408 Q455 435 428 438Z"/>
+        <text class="smalllabel" x="482" y="378">湖中洲</text>
+        <path class="dike" d="M292 172 Q390 145 505 166 Q574 176 650 220 L636 242 Q555 201 500 194 Q395 174 304 201Z" onclick="inspect('dike')"/>
+        <path class="bridge" d="M350 177 Q350 196 370 199 M414 166 Q414 186 434 190 M480 169 Q480 190 500 194 M548 182 Q548 202 568 209 M612 205 Q612 223 628 231"/>
+        <text class="label" x="385" y="150">长堤</text><text class="smalllabel" x="388" y="128">六桥通行线</text>
+        <path class="road" d="M165 470 Q240 415 290 360 Q335 300 304 201"/><path class="road" d="M165 500 Q270 520 355 510 Q480 548 620 472"/>
+        <circle class="point-ripple" cx="150" cy="462"/><circle class="map-point-ink" id="p-hub" cx="150" cy="462" r="10" tabindex="0" onclick="inspect('hub')"/><text class="smalllabel" x="103" y="442">城中运河</text>
+        <circle class="point-ripple" cx="392" cy="154"/><circle class="map-point-ink" id="p-north" cx="392" cy="154" r="10" tabindex="0" onclick="inspect('north')"/><text class="smalllabel" x="350" y="110">湖区北缘</text>
+        <circle class="point-ripple" cx="286" cy="316"/><circle class="map-point-ink" id="p-mud" cx="286" cy="316" r="10" tabindex="0" onclick="inspect('mud')"/><text class="smalllabel" x="238" y="340">淤塞区</text>
+        <circle class="point-ripple" cx="590" cy="380"/><circle class="map-point-ink" id="p-field" cx="590" cy="380" r="10" tabindex="0" onclick="inspect('field')"/><text class="smalllabel" x="603" y="383">菱角种植</text>
+        <circle class="point-ripple" cx="535" cy="260"/><circle class="map-point-ink" id="p-tower" cx="535" cy="260" r="10" tabindex="0" onclick="inspect('tower')"/><text class="smalllabel" x="552" y="258">三塔界标</text>
+        <text class="label" x="415" y="318">西湖</text><text class="smalllabel" x="383" y="344">“如人之有眉目”</text><text class="smalllabel" x="728" y="640">元祐年间・杭州</text>
+      </svg>
+      <div class="map-water-shimmer"><i></i><i></i><i></i><i></i></div>
+      <div class="map-boat boat1"><span class="hull"></span><span class="mast"></span><span class="sail"></span></div>
+      <div class="map-boat boat2"><span class="hull"></span><span class="mast"></span><span class="sail"></span></div>
+      <div class="map-person person1"></div><div class="map-person person2"></div><div class="map-person person3"></div>
+      <div class="map-legend">● 点击地点取得史料<br>▰ 长堤 / 六桥工程线<br>〰 水纹与舟路持续流动</div>
+    </div>
+    <aside class="map-side manuscript">
+      <div class="manuscript-inner">
+        <div class="manuscript-tag">SU SHI · FIELD NOTE</div><div class="seal-mini">知杭</div>
+        <h3 id="intelTitle">尚未落笔</h3>
+        <div class="map-detail manuscript-copy" id="intelCopy">你站在湖岸，不要急着回答“怎么治理”。先看水、看城、看田、看人。点击地图上的朱印，取得一页“现场笔记”。</div>
+        <div class="ink-quote" id="inkQuote">“杭州之有西湖，如人之有眉目，盖不可废也。”</div>
+        <div class="objective"><b>知州勘湖簿</b><span id="taskHint">调查 3 个地点，并至少发现 1 条关于“长期治理”的证据。</span></div>
+        <div class="task-list" id="intelList"><div class="task"><strong>○ 尚无调查记录</strong><span>你取得的每条证据都会改变后续判断。</span></div></div>
+        <div class="actions"><button class="btn" id="startChoice" disabled>合上地图，进入决策 →</button></div>
+        <div class="scroll-hint">卷末小字：地图为教学示意；重点在“空间关系 → 治理判断”的阅读。</div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+
+<section class="section" id="choice">
+  <div class="section-title"><span class="num">02</span><h2>知州，你准备怎么治？</h2></div>
+  <p class="lead">三条路摆在你面前。不要只问“眼前能不能解决”，还要问：十年之后，西湖会变成什么？</p>
+  <div class="choices">
+    <button class="choice" data-type="wrong1">
+      <div class="tag">方案 A · 快速见效</div>
+      <h3>直接填湖造田</h3>
+      <p>把越来越浅的湖面彻底变成土地。短期增加可耕面积，但等于主动放弃水体本身。</p>
+    </button>
+    <button class="choice" data-type="wrong2">
+      <div class="tag">方案 B · 只做清淤</div>
+      <h3>把泥挖走就结束</h3>
+      <p>清理湖底、恢复水面，但不考虑葑草再生、淤泥去处以及交通与水利系统的长期安排。</p>
+    </button>
+    <button class="choice" data-type="correct">
+      <div class="tag">方案 C · 系统治理</div>
+      <h3>清淤 + 筑堤 + 管理水系</h3>
+      <p>疏浚湖面、清除葑草；利用清出的材料筑成长堤，并配合水系治理与后续管理。</p>
+    </button>
+  </div>
+  <div id="feedback" class="feedback"></div>
+  <button id="continue" class="primary continue">解锁：苏堤建造过程 →</button>
+</section>
+
+<section class="section build" id="build">
+  <div class="section-title"><span class="num">03</span><h2>苏堤，是怎么来的？</h2></div>
+  <p class="lead">你已经选对了。现在一步步完成这项工程。</p>
+  <div class="panel">
+    <div class="steps">
+      <div class="step active">① 清除葑草</div>
+      <div class="step">② 疏浚湖面</div>
+      <div class="step">③ 因地制宜筑堤</div>
+      <div class="step">④ 六桥贯通</div>
+    </div>
+    <div class="build-stage" id="buildStage">
+      <div class="water"></div><div class="bank"></div><div class="dike"></div>
+      <div class="bridge b1"></div><div class="bridge b2"></div><div class="bridge b3"></div><div class="bridge b4"></div>
+      <div class="tree t1"></div><div class="tree t2"></div><div class="tree t3"></div><div class="tree t4"></div>
+      <div class="stage-text" id="stageText">
+        <b>第一步：清除葑草</b><br>
+        湖面长期荒废，葑草不断滋长并形成“葑田”。治理首先要恢复水面。
+      </div>
+    </div>
+    <div class="build-controls">
+      <button class="secondary" id="prevStep">← 上一步</button>
+      <span id="stepCounter">1 / 4</span>
+      <button class="primary" id="nextStep">下一步 →</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="compare">
+  <div class="section-title"><span class="num">04</span><h2>把时间拉过西湖</h2></div>
+  <p class="lead">拖动中央滑块，观察治理前后的空间变化。这里的景观是“示意图”，不是历史复原图。</p>
+  <div class="panel compare">
+    <div class="compare-wrap">
+      <div class="compare-side new">
+        <div class="comp-mountain"></div><div class="dike"></div><div class="flowers"></div>
+      </div>
+      <div class="compare-side old" id="oldSide">
+        <div class="comp-mountain"></div>
+      </div>
+      <span class="compare-label label-old">改造前 · 葑草与淤塞</span>
+      <span class="compare-label label-new">治理后 · 开阔湖面与苏堤</span>
+      <div class="slider" id="slider"></div>
+      <input id="range" type="range" min="0" max="100" value="50" aria-label="新旧西湖对比滑块">
+    </div>
+    <div class="compare-info">
+      <span><b>左：</b>湖面被葑草、淤积不断侵占</span>
+      <span><b>右：</b>疏浚恢复水面，长堤连接南北、便利通行</span>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="knowledge">
+  <div class="section-title"><span class="num">05</span><h2>三枚知识印章</h2></div>
+  <p class="lead">真正值得记住的不是“苏轼修了一个景点”，而是这场工程背后的治理逻辑。</p>
+  <div class="knowledge">
+    <article class="card">
+      <div class="icon">堤</div>
+      <h3>苏堤的作用</h3>
+      <p>疏浚产生的大量葑草、淤泥需要处置。筑成长堤既解决了堆放问题，又形成南北通行道路，并与六桥共同构成新的湖区空间。</p>
+      <button class="secondary learn" data-modal="dike">查看考点</button>
+    </article>
+    <article class="card">
+      <div class="icon">月</div>
+      <h3>三潭印月的前身</h3>
+      <p>治理时设置三座石塔作为湖中界标，以限制菱角种植侵占水面。今天的“三潭印月”是后世不断发展形成的景观。</p>
+      <button class="secondary learn" data-modal="moon">查看考点</button>
+    </article>
+    <article class="card">
+      <div class="icon">民</div>
+      <h3>利民为本</h3>
+      <p>苏轼上疏论证西湖价值时，反复从居民饮水、农田灌溉、运河交通与地方经济等现实利益出发。</p>
+      <button class="secondary learn" data-modal="people">查看考点</button>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="ending">
+    <div class="kicker">THE GOVERNOR BEHIND THE POET</div>
+    <h2>苏轼不只是诗人。</h2>
+    <p>
+      他当然写“水光潋滟”，但在西湖真正危急的时候，他面对的是预算、劳力、淤泥、农田、
+      饮水与城市交通之间互相牵制的现实问题。<br>
+      <b>一条苏堤，是一首写在城市里的“实干诗”。</b>
+    </p>
+    <div class="sources">
+      史实依据：苏轼《乞开杭州西湖状》；西湖相关文史资料。页面中的场景为教学示意。<br>
+      关键史实：苏轼于元祐年间任杭州知州并主持西湖疏浚；奏状明确记载西湖淤塞、封田及饮水、灌溉、运河等问题。
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="close" id="closeModal">×</button>
+    <div class="kicker" id="modalKicker">KNOWLEDGE</div>
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="progress"><i></i></div>
+  </div>
+</div>
+
+<script>
+/* ===== 古地图交互修复：所有地图点均使用原生 DOM 事件，不依赖外部库 ===== */
+const fieldNotes = {
+  hub: {
+    title:"城中运河・水从城里经过",
+    text:"这里连接城市日常生活。若湖水衰退，影响的不只是风景，还会牵动居民取水、农田灌溉与运河水源。先问“谁会受到影响”，再问“工程怎么做”。",
+    tag:"公共水利证据"
+  },
+  north: {
+    title:"湖区北缘・淤积正在改变湖形",
+    text:"湖面不断被葑草、泥沙侵占，水域有效面积逐渐缩小。治理的第一步不是造景，而是恢复湖面本身的功能。",
+    tag:"湖面变化证据"
+  },
+  mud: {
+    title:"淤塞区・挖出来的东西去哪儿？",
+    text:"疏浚并不意味着把问题消失。大量葑草与淤泥需要处理。若能把清出的材料转化为堤岸，工程就从“清理”进一步变成“建设”。",
+    tag:"工程材料证据"
+  },
+  field: {
+    title:"菱角种植区・生产与公共水面冲突",
+    text:"湖面被分割、占用之后，局部生产利益可能增加，却会影响整体水面功能。治理需要在私人收益与公共水利之间重新划定边界。",
+    tag:"治理冲突证据"
+  },
+  tower: {
+    title:"三塔界标・给水面划出边界",
+    text:"三座石塔的意义不只是景观。它们可作为湖中界标，帮助限制菱角等种植活动侵占水面。今天的“三潭印月”则是后世不断发展形成的景观。",
+    tag:"历史源流证据"
+  },
+  dike: {
+    title:"长堤・把“清理”变成“公共工程”",
+    text:"利用疏浚所得材料筑堤，使原本需要处理的葑草、淤泥转化为道路与湖区空间组织的一部分；长堤后来设置六桥，便利南北往来。",
+    tag:"系统治理证据"
+  }
+};
+
+const mapState = { evidence:new Set() };
+
+function inspect(key){
+  const d=fieldNotes[key];
+  if(!d) return;
+
+  mapState.evidence.add(key);
+
+  const title=document.getElementById("intelTitle");
+  const copy=document.getElementById("intelCopy");
+  const list=document.getElementById("intelList");
+  const hint=document.getElementById("taskHint");
+  const start=document.getElementById("startChoice");
+
+  if(title) title.textContent=d.title;
+  if(copy) copy.textContent=d.text;
+
+  document.querySelectorAll(".map-point-ink").forEach(el=>el.classList.remove("active"));
+  const point=document.getElementById("p-"+key);
+  if(point) point.classList.add("active");
+
+  if(list){
+    list.innerHTML="";
+    Array.from(mapState.evidence).forEach(k=>{
+      const item=fieldNotes[k];
+      const row=document.createElement("div");
+      row.className="task";
+      row.innerHTML="<strong>✓ "+item.title+"</strong><span>"+item.tag+"</span>";
+      list.appendChild(row);
+    });
+  }
+
+  const count=mapState.evidence.size;
+  if(hint){
+    hint.textContent=count<3
+      ? `已调查 ${count} / 3 个地点；继续寻找不同类型的证据。`
+      : "勘湖完成。你已经拥有足够证据，可以进入治理决策。";
+  }
+
+  if(start){
+    start.disabled=count<3;
+    start.classList.toggle("show",count>=3);
+    if(count>=3){
+      start.onclick=()=>{
+        const choice=document.getElementById("choice");
+        if(choice) choice.scrollIntoView({behavior:"smooth",block:"start"});
+      };
+    }
+  }
+}
+
+/* 让 SVG 的键盘操作与鼠标操作完全一致 */
+document.querySelectorAll(".map-point-ink").forEach(point=>{
+  point.addEventListener("keydown",e=>{
+    if(e.key==="Enter" || e.key===" "){
+      e.preventDefault();
+      point.click();
+    }
+  });
+});
+
+const feedback = document.getElementById('feedback');
+const continueBtn = document.getElementById('continue');
+const build = document.getElementById('build');
+
+const messages = {
+  wrong1: {
+    good:false,
+    title:'方案失败：你把“水利问题”变成了“土地问题”。',
+    text:'填湖造田看似增加土地，实际上会进一步损失蓄水与供水能力。苏轼在奏状中明确强调：西湖关系杭州居民饮水、农业灌溉、运河水源等，不能把湖本身当成需要消灭的对象。'
+  },
+  wrong2: {
+    good:false,
+    title:'方案不完整：清淤只是第一半。',
+    text:'如果只把泥挖走，却不解决葑草再生、淤泥如何利用以及湖区交通与水系的长期管理，工程很容易再次陷入“前功尽弃”。苏轼的方案正是在疏浚之外继续安排筑堤与后续管理。'
+  },
+  correct: {
+    good:true,
+    title:'治理成功：你抓住了“系统工程”的核心。',
+    text:'对。先恢复水面，再处理疏浚产生的材料，并把工程转化为长期有用的公共设施。史料记载苏轼募民开湖；后来的文献又记载以所积葑草筑长堤、设六桥，使堤路兼具通行与景观功能。'
+  }
+};
+
+document.querySelectorAll('.choice').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const type=btn.dataset.type, m=messages[type];
+    document.querySelectorAll('.choice').forEach(x=>x.classList.remove('wrong','correct'));
+    btn.classList.add(m.good?'correct':'wrong');
+    feedback.className='feedback show '+(m.good?'good':'bad');
+    feedback.innerHTML='<strong>'+m.title+'</strong><br>'+m.text;
+    if(m.good){
+      continueBtn.classList.add('show');
+      continueBtn.onclick=()=>{build.classList.add('unlocked');build.scrollIntoView({behavior:'smooth'});}
+    }else continueBtn.classList.remove('show');
+  });
+});
+
+const stages=[
+  ['第一步：清除葑草','湖面长期荒废，葑草不断滋长并形成“葑田”。治理首先要恢复水面。'],
+  ['第二步：疏浚湖面','清除葑草与淤积，重新扩大有效水面。苏轼奏状记载当时估计需要大量人力，并希望趁时节尽快施工。'],
+  ['第三步：因地制宜筑堤','疏浚产生的大量材料不必全部外运。利用清出的葑草、淤泥等筑成南北长堤，使治理工程同时产生公共交通设施。'],
+  ['第四步：六桥贯通','长堤后来设六桥，便利南北往来。六桥与堤路共同改变了西湖空间，也成为后世“苏堤春晓”的基础。']
+];
+let stage=0;
+const stageText=document.getElementById('stageText');
+const steps=document.querySelectorAll('.step');
+function renderStage(){
+  stageText.innerHTML='<b>'+stages[stage][0]+'</b><br>'+stages[stage][1];
+  steps.forEach((s,i)=>s.classList.toggle('active',i<=stage));
+  document.getElementById('stepCounter').textContent=(stage+1)+' / 4';
+  document.getElementById('prevStep').disabled=stage===0;
+  document.getElementById('nextStep').textContent=stage===3?'完成工程 ✓':'下一步 →';
+}
+document.getElementById('nextStep').onclick=()=>{if(stage<3){stage++;renderStage()}};
+document.getElementById('prevStep').onclick=()=>{if(stage>0){stage--;renderStage()}};
+renderStage();
+
+const range=document.getElementById('range'), oldSide=document.getElementById('oldSide'), slider=document.getElementById('slider');
+function updateCompare(){
+  const v=range.value;
+  oldSide.style.clipPath=`inset(0 ${100-v}% 0 0)`;
+  slider.style.left=v+'%';
+}
+range.addEventListener('input',updateCompare); updateCompare();
+
+const modalData={
+  dike:{
+    title:'苏堤：不只是“好看”',
+    body:`<p><b>第一层：水利工程的副产物被重新利用。</b>疏浚会产生大量葑草与淤泥，筑堤可以就地消化这些材料。</p>
+    <p><b>第二层：公共交通。</b>长堤横贯湖面，使南北交通更便利；后来的六桥进一步改善了通行。</p>
+    <p><b>第三层：长期治理。</b>西湖治理不是一次性的“挖泥”，而是把水面恢复、空间组织和后续管理联系起来。</p>`
+  },
+  moon:{
+    title:'“三潭印月”到底和苏轼有什么关系？',
+    body:`<p>这里最容易被讲错。苏轼主持疏浚时，湖中确有设置三座石塔作为标志，用来划定范围、限制容易造成淤积的菱角种植。</p>
+    <p>但<b>今天“三潭印月”的完整景观并不是苏轼在北宋一次性建成的</b>。后世经过重建、扩展和景观经营，才逐渐形成今天所见的湖中小瀛洲与三塔景观。</p>
+    <p>所以更准确的说法是：<b>苏轼治理西湖留下了“三塔”这一重要历史源头，而“三潭印月”是后世发展形成的名景。</b></p>`
+  },
+  people:{
+    title:'“利民为本”不是一句空口号',
+    body:`<p>《乞开杭州西湖状》直接列出西湖不可废的五个理由，其中包括居民饮水、农业灌溉、运河水源和地方经济。</p>
+    <p>这体现了一种很典型的治理思路：<b>先识别公共问题，再计算长期成本，最后设计能持续运行的工程。</b></p>
+    <p>苏轼的“为民”因此不是单纯的同情，而是把百姓的现实生活转化成具体的行政决策。</p>`
+  }
+};
+document.querySelectorAll('[data-modal]').forEach(btn=>{
+  btn.onclick=()=>{
+    const d=modalData[btn.dataset.modal];
+    document.getElementById('modalTitle').textContent=d.title;
+    document.getElementById('modalBody').innerHTML=d.body;
+    document.getElementById('modalBackdrop').classList.add('show');
+  }
+});
+document.getElementById('closeModal').onclick=()=>document.getElementById('modalBackdrop').classList.remove('show');
+document.getElementById('modalBackdrop').onclick=e=>{if(e.target.id==='modalBackdrop')e.currentTarget.classList.remove('show')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('modalBackdrop').classList.remove('show')});
+</script>
+</body>
+</html>
